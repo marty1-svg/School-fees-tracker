@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shule Fee Tracker</title>
+<style>
+body{font-family:Arial;background:#f2f2f2;padding:15px}
+h1{color:#0a7a42;text-align:center}
+.card{background:white;padding:15px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 5px #ccc}
+input,select{width:100%;padding:10px;margin:5px 0;border:1px solid #ccc;border-radius:8px}
+button{width:100%;padding:12px;background:#0a7a42;color:white;border:none;border-radius:8px;font-size:16px;margin-top:5px}
+.pupil{border-bottom:1px solid #eee;padding:8px 0}
+.owe{color:red;font-weight:bold}
+.paid{color:green;font-weight:bold}
+.small{font-size:13px;color:#555}
+</style>
+</head>
+<body>
+<h1>🏫 Shule Fee Tracker</h1>
+
+<div class="card">
+<h3>Dashboard</h3>
+<p>Total Pupils: <b id="totalP">0</b></p>
+<p>Total Collected: <b id="totalC">KES 0</b></p>
+<p>Total Owing: <b id="totalO" style="color:red">KES 0</b></p>
+</div>
+
+<div class="card">
+<h3>Add Pupil</h3>
+<input id="name" placeholder="Pupil Name e.g. Kevin Kiprop">
+<input id="class" placeholder="Class e.g. Grade 5">
+<input id="phone" placeholder="Parent Phone e.g. 0722345678">
+<input id="fee" type="number" placeholder="Total Fee e.g. 15000">
+<button onclick="addPupil()">Add Pupil</button>
+</div>
+
+<div class="card">
+<h3>Record Payment</h3>
+<select id="selectPupil"></select>
+<input id="payAmt" type="number" placeholder="Amount Paid e.g. 5000">
+<button onclick="pay()">Record Payment</button>
+</div>
+
+<div class="card">
+<h3>All Pupils</h3>
+<div id="list"></div>
+</div>
+
+<script>
+let pupils = JSON.parse(localStorage.getItem('pupils')||'[]');
+function save(){localStorage.setItem('pupils',JSON.stringify(pupils)); render();}
+function addPupil(){
+let n=name.value, c=class.value, p=phone.value, f=Number(fee.value);
+if(!n||!f){alert('Fill name and fee');return;}
+pupils.push({name:n,class:c,phone:p,fee:f,paid:0});
+name.value='';class.value='';phone.value='';fee.value='';
+save();
+}
+function pay(){
+let i=selectPupil.value; let amt=Number(payAmt.value);
+if(amt<=0){alert('Enter amount');return;}
+pupils[i].paid+=amt; payAmt.value=''; save();
+}
+function render(){
+let tp=pupils.length, tc=0, to=0;
+let html=''; let opts='';
+pupils.forEach((s,i)=>{
+let bal=s.fee-s.paid; tc+=s.paid; to+=bal;
+let msg=`Hello ${s.name}'s parent, This is Shule Fee Tracker. ${s.name} has a fee balance of KES ${bal}. Kindly pay via M-Pesa. Thank you.`;
+let wa=`https://wa.me/254${s.phone.slice(-9)}?text=${encodeURIComponent(msg)}`;
+html+=`<div class="pupil"><b>${s.name}</b> - ${s.class}<br><span class="small">Parent: ${s.phone} | Fee: ${s.fee} | Paid: <span class="paid">${s.paid}</span> | Balance: <span class="owe">${bal}</span></span><br><a href="${wa}" target="_blank"><button style="background:#25D366;padding:8px;margin-top:5px">Send WhatsApp Reminder</button></a></div>`;
+opts+=`<option value="${i}">${s.name} - Bal ${bal}</option>`;
+});
+totalP.innerText=tp; totalC.innerText='KES '+tc; totalO.innerText='KES '+to;
+list.innerHTML=html||'No pupils yet'; selectPupil.innerHTML=opts;
+}
+render();
+</script>
+</body>
+</html>
